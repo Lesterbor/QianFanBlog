@@ -11,8 +11,8 @@ jobs:
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.HOST }}
-          username: root
-          password: ${{ secrets.SSH_PASSWORD }}  # 使用密码认证
+          username: linuxserver.io
+          password: ${{ secrets.PASSWORD }}
           port: ${{ secrets.PORT }}
           script: |
             cd /var/www/QianFanBlog
