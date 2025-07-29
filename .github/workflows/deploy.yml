@@ -1,27 +1,103 @@
-  name: Deploy to Server via SSH
-  uses: appleboy/ssh-action@v1
-  with:
-    host: ${{ secrets.SSH_HOST }}
-    username: ${{ secrets.SSH_USERNAME }}
-    key: ${{ secrets.SSH_PRIVATE_KEY }}
-    script_timeout: 15m
-    envs: CI=true
-    debug: true
-    script: |
-      echo "=== 环境验证 ==="
-      whoami
-      pwd
-      ls -la /var/www/QianFanBlog
-      
-      echo "=== 开始部署 ==="
-      cd /var/www/QianFanBlog
-      git config --global --add safe.directory /var/www/QianFanBlog
-      git reset --hard HEAD
-      git pull origin main
-      npm ci --omit=dev
-      npm run build
-      
-      echo "=== 权限修复 ==="
-      chown -R ${{ secrets.SSH_USERNAME }}:www-data /var/www/QianFanBlog
-      find . -type d -exec chmod 755 {} \;
-      find . -type f -exec chmod 644 {} \;
+name: Debug Docusaurus Deployment
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate Secrets
+        run: |
+          echo "=== Secrets 验证 ==="
+          echo "SSH_HOST: ${#{ secrets.SSH_HOST != '' ? '***' : 'EMPTY' }#}"
+          echo "SSH_USERNAME: ${#{ secrets.SSH_USERNAME != '' ? '***' : 'EMPTY' }#}"
+          echo "SSH_KEY_LENGTH: ${#{ secrets.SSH_PRIVATE_KEY != '' ? secrets.SSH_PRIVATE_KEY.length : '0' }#} chars"
+          echo "===================="
+
+      - name: Debug SSH Connection
+        uses: appleboy/ssh-action@v1
+        env:
+          DEPLOY_PATH: "/var/www/QianFanBlog"
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE || '' }}
+          script_timeout: 20m
+          debug: true
+          script: |
+            set -x  # 开启命令回显
+            echo "=== 系统信息 ==="
+            uname -a
+            lsb_release -a 2>/dev/null || cat /etc/*release
+            
+            echo "=== 用户验证 ==="
+            whoami
+            id
+            sudo -l
+            
+            echo "=== 目录验证 ==="
+            ls -ld $DEPLOY_PATH
+            ls -la $DEPLOY_PATH
+            test -w $DEPLOY_PATH || echo "错误：目录不可写"
+            
+            echo "=== Git 验证 ==="
+            cd $DEPLOY_PATH
+            git config --global --add safe.directory $DEPLOY_PATH
+            git remote -v
+            git status
+            git rev-parse --is-inside-work-tree || echo "错误：不是Git仓库"
+            
+            echo "=== 网络验证 ==="
+            curl -I https://github.com
+            npm config get registry
+            
+            echo "=== 依赖验证 ==="
+            node -v
+            npm -v
+            which node
+            which npm
+            
+            echo "=== 开始部署 ==="
+            if ! git reset --hard HEAD; then
+              echo "!! git reset 失败 !!"
+              exit 1
+            fi
+            
+            if ! git pull origin main; then
+              echo "!! git pull 失败 !!"
+              git fetch --all
+              git log -n 3 --oneline
+              exit 1
+            fi
+            
+            echo "=== 依赖安装 ==="
+            npm cache clean --force
+            if ! npm ci --omit=dev; then
+              echo "!! npm install 失败 !!"
+              cat package.json | jq '.dependencies'
+              exit 1
+            fi
+            
+            echo "=== 构建过程 ==="
+            if ! npm run build; then
+              echo "!! 构建失败 !!"
+              cat build.log || echo "无构建日志"
+              exit 1
+            fi
+            
+            echo "=== 权限处理 ==="
+            sudo chown -R $(whoami):www-data $DEPLOY_PATH || echo "权限修改警告"
+            find $DEPLOY_PATH -type d -exec chmod 755 {} \;
+            find $DEPLOY_PATH -type f -exec chmod 644 {} \;
+            
+            echo "=== 最终验证 ==="
+            ls -l $DEPLOY_PATH/build/
+            du -sh $DEPLOY_PATH
+            echo "✅ 部署成功"
