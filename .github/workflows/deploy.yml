@@ -1,18 +1,17 @@
 name: Deploy QianFanBlog
-on:
-  push:
-    branches: [ main ]  # 只在推送到main分支时触发
-
+on: [push]
 jobs:
   deploy:
+    name: Deploy
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - name: Deploy via SSH
+      - name: 克隆仓库并构建项目
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.HOST }}
-          username: linuxserver.io
-          password: ${{ secrets.PASSWORD }}
+          username: root
+          password: ${{ secrets.PASSWORD }} 
           port: ${{ secrets.PORT }}
           script: |
             cd /var/www/QianFanBlog
