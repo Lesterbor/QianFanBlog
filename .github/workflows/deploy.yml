@@ -1,35 +1,27 @@
-name: Deploy Docusaurus to Server
-
-on:
-  push:
-    branches: [ main ]
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-
-      - name: Install Dependencies
-        run: npm install
-
-      - name: Build Docusaurus
-        run: npm run build
-
-      - name: Deploy to Server via SSH
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.SSH_HOST }}  # 必须使用GitHub Secrets
-          username: ${{ secrets.SSH_USERNAME }}  # 必须使用GitHub Secrets
-          key: ${{ secrets.SSH_PRIVATE_KEY }}  # 必须使用GitHub Secrets
-          script: |
-            cd /var/www/QianFanBlog
-            git pull origin main
-            npm install
-            npm run build
+- name: Deploy to Server via SSH
+  uses: appleboy/ssh-action@v1
+  with:
+    host: ${{ secrets.SSH_HOST }}
+    username: ${{ secrets.SSH_USERNAME }}
+    key: ${{ secrets.SSH_PRIVATE_KEY }}
+    script_timeout: 15m
+    envs: CI=true
+    debug: true
+    script: |
+      echo "=== 环境验证 ==="
+      whoami
+      pwd
+      ls -la /var/www/QianFanBlog
+      
+      echo "=== 开始部署 ==="
+      cd /var/www/QianFanBlog
+      git config --global --add safe.directory /var/www/QianFanBlog
+      git reset --hard HEAD
+      git pull origin main
+      npm ci --omit=dev
+      npm run build
+      
+      echo "=== 权限修复 ==="
+      chown -R ${{ secrets.SSH_USERNAME }}:www-data /var/www/QianFanBlog
+      find . -type d -exec chmod 755 {} \;
+      find . -type f -exec chmod 644 {} \;
