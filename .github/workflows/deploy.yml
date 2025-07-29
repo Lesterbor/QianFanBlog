@@ -1,15 +1,38 @@
-name: Remote SSH Command
+name: Deploy QianFanBlog
 on: [push]
 jobs:
-  build:
-    name: Build
+  deploy:
+    name: Deploy
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - name: 执行远程 SSH 命令（密码认证）
+      - name: 克隆仓库并构建项目
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.HOST }}
           username: root
-          password: ${{ secrets.PASSWORD }}
+          password: ${{ secrets.PASSWORD }}  # 或改用 key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.PORT }}
-          script: whoami
+          script: |
+            # 1. 进入目标目录
+            cd /var/www || mkdir -p /var/www && cd /var/www
+            
+            # 2. 克隆仓库（如果不存在）或拉取最新代码
+            if [ -d "QianFanBlog" ]; then
+              echo "🔄 仓库已存在，拉取最新代码..."
+              cd QianFanBlog
+              git pull origin main  # 或你的分支名（如 master）
+            else
+              echo "📥 克隆仓库..."
+              git clone https://${{ secrets.GIT_USERNAME }}:${{ secrets.GIT_TOKEN }}@github.com/你的用户名/QianFanBlog.git
+              cd QianFanBlog
+            fi
+
+            # 3. 安装依赖并构建
+            echo "🔧 安装 npm 依赖..."
+            npm install --production  # 如果只需要生产依赖
+            
+            echo "🏗️ 构建项目..."
+            npm run build
+
+            echo "✅ 部署完成！"
