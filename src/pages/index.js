@@ -10,7 +10,7 @@ export default function Home() {
   const bgPatternUrl = useBaseUrl('/img/bg-pattern.jpg'); // 可选背景纹理
 
   return (
-    <Layout title="首页" description="个人技术博客与项目展示 | 修改自动同步 | 生的asasdaddew伟大 | 2 |3|5zewxwx">
+    <Layout title="首页" description="个人技术博客与项目展示 | 修改自动同步 | 生的asasdaddew伟大 | 2 |3|5zewxwx | 萨法">
       {/* 渐变背景 + 动态粒子效果容器 */}
       <div style={{
         background: 'linear-gradient(135deg, #70a148ff 0%, #a777e3 100%)',
