@@ -10,7 +10,7 @@ import {themes as prismThemes} from 'prism-react-renderer';
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'My Site',
+  title: '千樊技术文档',
   tagline: 'Dinosaurs are cool',
   favicon: 'img/favicon.ico',
 
@@ -37,8 +37,8 @@ const config = {
   // useful metadata like html lang. For example, if your site is Chinese, you
   // may want to replace "en" with "zh-Hans".
   i18n: {
-    defaultLocale: 'en',
-    locales: ['en'],
+    defaultLocale: 'zh-Hans',
+    locales: ['zh-Hans'],
   },
 
   presets: [
@@ -81,22 +81,33 @@ const config = {
       // Replace with your project's social card
       image: 'img/docusaurus-social-card.jpg',
       navbar: {
-        title: 'My Site',
+        title: '千樊技术文档',
         logo: {
           alt: 'My Site Logo',
-          src: 'img/logo.svg',
+          src: 'img/favicon.ico',
         },
         items: [
           {
             type: 'docSidebar',
             sidebarId: 'tutorialSidebar',
             position: 'left',
-            label: 'Tutorial',
-          },
-          {to: '/blog', label: 'Blog', position: 'left'},
-          {
-            href: 'https://github.com/facebook/docusaurus',
+            label: '项目',
+          },{
+            type: 'docSidebar',
+            sidebarId: 'tutorialSidebar',
+            position: 'left',
+            label: '关于',
+          },{
+            to: '/blog',
+            position: 'left',
+            label: '博客',
+          },{
+            href: 'https://github.com/Lesterbor',
             label: 'GitHub',
+            position: 'right',
+          },{
+            href: 'https://space.bilibili.com/436662232',
+            label: 'Bilibili',
             position: 'right',
           },
         ],
@@ -144,7 +155,7 @@ const config = {
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
+        copyright: `Copyright © ${new Date().getFullYear()} 千樊技术文档, Inc. Built with Docusaurus.`,
       },
       prism: {
         theme: prismThemes.github,
